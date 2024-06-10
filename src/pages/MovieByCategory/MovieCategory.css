@@ -1,0 +1,74 @@
+/* MovieCategory.css */
+
+/* Container for movies */
+.movie-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-gap: 20px;
+}
+
+
+
+/* Movie image */
+.movie-card img {
+  width: 150px;
+  height: auto;
+  border-bottom: 1px solid #ddd;
+}
+
+
+
+/* Movie title */
+.movie-card .card-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+/* Movie pagination */
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.pagination .page-link {
+  border-radius: 20px;
+  padding: 8px 16px;
+  margin: 0 5px;
+  color: #007bff;
+  background-color: transparent;
+  border: 1px solid #007bff;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.pagination .page-link:hover {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #007bff;
+  color: #fff;
+  border: 1px solid #007bff;
+}
+
+/* Button to view all movies */
+.view-all-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.view-all-button:hover {
+  background-color: #0056b3;
+}
+
+.mainBody{
+  background-color: black;
+}

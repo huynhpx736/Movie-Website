@@ -1,0 +1,44 @@
+/* Trong file MovieList.css */
+
+.movie-list-container {
+    padding: 20px;
+}
+
+.movie-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-gap: 20px;
+}
+
+.movie-card {
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.movie-card h2 {
+    margin-top: 0;
+}
+
+.movie-image {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
+}
+
+.movie-card p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.movie-card p strong {
+    font-weight: bold;
+}
+
+/* Hiệu ứng hover */
+.movie-card:hover {
+    transform: translateY(-5px);
+    transition: transform 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
