@@ -1,0 +1,31 @@
+
+
+.movie-card:hover {
+    transform: scale(1.05);
+}
+
+.movie-link {
+    text-decoration: none;
+    color: #f2efef;
+}
+
+.movie-image {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
+}
+
+.movie-details {
+    padding-top: 10px;
+}
+
+.movie-name {
+    margin: 0;
+    font-size: 18px;
+}
+
+.movie-views {
+    margin: 0;
+    font-size: 14px;
+    color: #fff9f9;
+}
