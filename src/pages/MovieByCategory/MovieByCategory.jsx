@@ -9,7 +9,7 @@ import Footer from '../../components/Footer/Footer';
 const MovieCategory = ({ categoryId }) => {
   const [movies, setMovies] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [moviesPerPage] = useState(5); // Number of movies per page
+  const [moviesPerPage] = useState(2); // Number of movies per page
   const [categoryName, setCategoryName] = useState(""); // State to store category name
 
   useEffect(() => {

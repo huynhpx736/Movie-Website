@@ -9,22 +9,6 @@
 
 
 
-/* Movie image */
-.movie-card img {
-  width: 150px;
-  height: auto;
-  border-bottom: 1px solid #ddd;
-}
-
-
-
-/* Movie title */
-.movie-card .card-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin-top: 10px;
-}
-
 /* Movie pagination */
 .pagination {
   margin-top: 20px;
@@ -53,21 +37,7 @@
   border: 1px solid #007bff;
 }
 
-/* Button to view all movies */
-.view-all-button {
-  margin-top: 20px;
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
-}
 
-.view-all-button:hover {
-  background-color: #0056b3;
-}
 
 .mainBody{
   background-color: black;
