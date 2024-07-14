@@ -1,17 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { getAllCountries, getAllCategories } from '../../Utils/api';
+import { Link, useNavigate } from 'react-router-dom';
+import { getAllCountries, getAllCategories, searchMovies } from '../../Utils/api';
 import './Header.css';
 import { FaUser, FaAngleDown } from 'react-icons/fa';
-import Dropdown from 'react-bootstrap/Dropdown';
-
+import SearchResultItem from '../../pages/SearchMovie/SearchResultItem';
 function Header() {
     const [categories, setCategories] = useState([]);
     const [countries, setCountries] = useState([]);
-    // const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-
-    // const [userInfo, setUserInfo] = useState(JSON.parse(localStorage.getItem('userInfo')));
+    const [searchResults, setSearchResults] = useState([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -20,10 +18,6 @@ function Header() {
                 const countriesData = await getAllCountries();
                 setCategories(categoriesData);
                 setCountries(countriesData);
-                // const token = localStorage.getItem('token');
-                // if (token) {
-                //     setIsLoggedIn(true);
-                // }
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -32,15 +26,35 @@ function Header() {
         fetchData();
     }, []);
 
+    useEffect(() => {
+        const fetchSearchResults = async () => {
+            if (searchTerm.trim() !== '') {
+                try {
+                    const results = await searchMovies(searchTerm);
+                    setSearchResults(results);
+                } catch (error) {
+                    console.error('Error searching movies:', error);
+                }
+            } else {
+                setSearchResults([]);
+            }
+        };
 
-    // Sử dụng useRef để xác định khi nào click ra ngoài dropdown
+        fetchSearchResults();
+    }, [searchTerm]);
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        if (searchTerm.trim() !== '') {
+            navigate('/search-results', { state: { results: searchResults } });
+        }
+    };
+
     const dropdownRef = useRef(null);
 
     useEffect(() => {
         const handleOutsideClick = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                // Kiểm tra xem click có trong dropdown hay không
-                // Nếu không, đóng dropdown
                 setDropdownOpen(false);
             }
         };
@@ -58,18 +72,16 @@ function Header() {
         setDropdownOpen(!dropdownOpen);
     };
 
-
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('userInfo');
-        // setIsLoggedIn(false);
         window.location.href = '/login';
     };
 
     return (
         <header className="header">
             <div className="logo-container">
-                <a href="/"><img className='logo' src="/hayphim.png" alt="" /></a>
+                <a href="/"><img className='logo' src="/logoPtit.png" alt="" /></a>
             </div>
             
             <nav className="nav-container">
@@ -104,13 +116,22 @@ function Header() {
             </nav>
 
             <div className="search-container">
-                <input
-                    type="text"
-                    placeholder="Tìm kiếm phim..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                {/* <button type="button">Tìm kiếm</button> */}
+                <form onSubmit={handleSearch}>
+                    <input
+                        type="text"
+                        placeholder="Tìm kiếm phim..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+
+                </form>
+                {searchResults.length > 0 && (
+                    <ul className="autocomplete-results">
+                        {searchResults.map(movie => (
+                            <SearchResultItem key={movie.id} movie={movie} />
+                        ))}
+                    </ul>
+                )}
             </div>
 
             <ul className="user-actions">
@@ -121,7 +142,7 @@ function Header() {
                     {dropdownOpen && (
                         <div className="dropdown-content">
                             <Link to="/profile">Tài khoản</Link>
-                            <Link to="/change-pass">Đổi mật khẩu</Link>
+                            {/* <Link to="/change-pass">Đổi mật khẩu</Link> */}
                             <Link to="/bought-movies">Phim đã mua</Link>
                             <Link to="/saved-movies">Phim đã lưu</Link>
                             <button onClick={handleLogout}>Đăng xuất</button>

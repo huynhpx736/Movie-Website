@@ -99,6 +99,7 @@
 
    .movie-card {
     width: 220px;
+    height:390px;
     margin: 20px;
     position: relative;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -128,7 +129,7 @@
     justify-content: space-between;
     padding: 10px;
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
-    z-index: 1;
+   
   }
   
   .movie-rating {

@@ -3,6 +3,12 @@
   color: white;
 }
 
+.mainBody h2 {
+  color: #ffd700;
+  font-size: 1.5rem;
+  margin-left: 50px;
+}
+
 .home-container {
   padding: 20px;
 }

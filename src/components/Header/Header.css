@@ -201,3 +201,41 @@
 .dropdown-content a:hover {
   background-color: #0b0a0a;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* .autocomplete-results {
+  position: absolute;
+  background: white;
+  border: 1px solid #ddd;
+  max-height: 200px;
+  overflow-y: auto;
+  width: 100%;
+  z-index: 1000;
+  color: black;
+} */
+
+/* Header.css */
+.autocomplete-results {
+  position: absolute;
+  background: white;
+  border: 1px solid #ddd;
+  max-height: 200px;
+  overflow-y: auto;
+  width: 100%;
+  z-index: 1000;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  color: black;
+}

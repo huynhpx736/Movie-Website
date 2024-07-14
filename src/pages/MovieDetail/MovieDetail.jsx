@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getMovieDetail, saveMovieToCollection, getCommentsByMovie, createComment } from '../../Utils/api';
+import { getMovieDetail, saveMovieToCollection, checkMovieCollectionExists, deleteCollectionByMovieAndUser } from '../../Utils/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faBookmark } from '@fortawesome/free-solid-svg-icons';
 import './MovieDetail.css';
 import Footer from '../../components/Footer/Footer';
 import Header from '../../components/Header/Header';
-
+import { createVNPayPayment, checkMoviePurchaseExists } from '../../Utils/api';
+import { Modal, Button } from 'react-bootstrap';
+import Comment from '../Comment/Comment';
 
 const MovieDetail = () => {
     const { movieId } = useParams();
@@ -14,10 +16,53 @@ const MovieDetail = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [saveMessage, setSaveMessage] = useState('');
-    const [comments, setComments] = useState([]);
-    const [newComment, setNewComment] = useState('');
+    // const [comments, setComments] = useState([]);
+    // const [newComment, setNewComment] = useState('');
+    const [showPopup, setShowPopup] = useState(false);
+    const [isMovieSaved, setIsMovieSaved] = useState(false);
+    const [isPurchased, setIsPurchased] = useState(false);
+    const user = JSON.parse(localStorage.getItem('userInfo'));
+
+    const handleButtonBuyClick = (e) => {
+        e.preventDefault();
+        setShowPopup(true);
+    };
+
+    const handlePurchaseMovie = async () => {
+        try {
+            const paymentData = {
+                amount: movie.price,
+                language: 'vn',
+                movieId: movie.movieId,
+                movieName: movie.name,
+                username: user.username,
+                email: user.email,
+                bankCode: '',
+                //tk test:9704198526191432198, ngân hàng ncb, NGUYEN VAN A, otp 123456
+            };
+            const response = await createVNPayPayment(paymentData);
+            window.open(response.data, '_blank');
+        } catch (error) {
+            console.error('Error purchasing movie:', error);
+        }
+    };
+
+    const handleClosePopup = () => {
+        setShowPopup(false);
+    };
 
     useEffect(() => {
+        const checkBought = async () => {
+            try {
+                if (user) {
+                    const exists = await checkMoviePurchaseExists(movieId, user.username);
+                    setIsPurchased(exists);
+                }
+            } catch (error) {
+                console.error('Error fetching user info or checking movie purchase:', error);
+            }
+        };
+
         const fetchMovieDetail = async () => {
             try {
                 const movieDetail = await getMovieDetail(movieId);
@@ -29,59 +74,41 @@ const MovieDetail = () => {
             }
         };
 
-        const fetchComments = async () => {
+        const checkMovieSaved = async () => {
             try {
-                const commentsData = await getCommentsByMovie(movieId);
-                setComments(commentsData);
+                // const userna = JSON.parse(localStorage.getItem('userInfo')).username;
+                if(user){
+                const response = await checkMovieCollectionExists(movieId, user.username);
+                setIsMovieSaved(response);
+                }
             } catch (error) {
-                console.error('Error fetching comments:', error);
+                console.error('Error checking movie collection:', error);
             }
         };
 
+        checkBought();
         fetchMovieDetail();
-        fetchComments();
-    }, [movieId]);
+        checkMovieSaved();
+    }, [movieId, user]);
 
     const handleSaveMovie = async () => {
         try {
-            const username = JSON.parse(localStorage.getItem('userInfo')).username; // Lấy username từ localStorage
-            const today = new Date().toISOString().split('T')[0]; // Lấy ngày hiện tại
-            const movieCollection = { movieId: parseInt(movieId), username, time: today };
+            // const usern = JSON.parse(localStorage.getItem('userInfo')).username;
+            const today = new Date().toISOString().split('T')[0];
+            const movieCollection = { movieId: parseInt(movieId), username:user.username, time: today };
 
-            const response = await saveMovieToCollection(movieCollection);
-            // setSaveMessage(response.desc);
-            setSaveMessage('Đã lưu phim');
+            if (isMovieSaved) {
+                await deleteCollectionByMovieAndUser(movieId, user.username);
+                setIsMovieSaved(false);
+                setSaveMessage('Đã xoá khỏi danh sách lưu phim');
+            } else {
+                await saveMovieToCollection(movieCollection);
+                setIsMovieSaved(true);
+                setSaveMessage('Đã lưu phim');
+            }
         } catch (error) {
             setSaveMessage('Error saving movie to collection');
         }
-    };
-
-    const handleCommentSubmit = async () => {
-        try {
-            const response = await createComment({ movieId, content: newComment });
-            setComments([...comments, response.data]);
-            setNewComment('');
-        } catch (error) {
-            console.error('Error creating comment:', error);
-        }
-    };
-
-    const renderStars = (value) => {
-      return (
-        <>
-          {[...Array(value)].map((_, index) => (
-            <FontAwesomeIcon key={index} icon={faStar} className="star-filled" />
-          ))}
-          {[...Array(5 - value)].map((_, index) => (
-            <FontAwesomeIcon key={index} icon={faStar} className="star-empty" />
-          ))}
-        </>
-      );
-    };
-
-    const formatDate = (dateString) => {
-      const [year, month, day] = dateString.split('-');
-      return `${day}-${month}-${year}`;
     };
 
     if (loading) {
@@ -97,145 +124,120 @@ const MovieDetail = () => {
     }
 
     return (
-        <div className='mainBody'>
+        <>
+           
+            <div className='mainBody'>
             <Header />
-
-            <div className="movie-detail">
-                <h2 className="title">{movie.name}</h2>
-                <div className="details">
-                    <img src={`${process.env.REACT_APP_UPLOAD_URL}/${movie.image}`} alt={movie.name} className="poster" />
-                    <div className="info">
-                        <p className="episodes">Số tập: {movie.episodes}</p>
-                        <p className="schedule">Năm phát hành: {movie.movieSchedule}</p>
-                        <p className="country">Quốc gia: {movie.country.name}</p>
-                        <p className="star">
-                            {movie.star === 0 ? (
-                                <span>Chưa có đánh giá</span>
-                            ) : (
-                                <>
-                                Đánh giá: {movie.star}/5 <FontAwesomeIcon icon={faStar} />
-                                </>
-                            )}
+                <div className="movie-detail">
+                    <h2 className="title">{movie.name}</h2>
+                    <div className="details">
+                        <img src={`${process.env.REACT_APP_UPLOAD_URL}/${movie.image}`} alt={movie.name} className="poster" />
+                        <div className="info">
+                            <p className="episodes">Số tập: {movie.episodes}</p>
+                            <p className="schedule">Năm phát hành: {movie.movieSchedule}</p>
+                            <p className="country">Quốc gia: {movie.country.name}</p>
+                            <p className="star">
+                                {movie.star === 0 ? (
+                                    <span>Chưa có đánh giá</span>
+                                ) : (
+                                    <>
+                                        Đánh giá: {movie.star}/5 <FontAwesomeIcon icon={faStar} />
+                                    </>
+                                )}
                             </p>
- 
-                        <p className="price">Giá mua: {movie.price}</p>
-                        {/* <p className="views">Lượt xem: {movie.views}</p> */}
-
-                        <div className="list_cate">
-                            <p>Thể loại</p>
-                            <div>
-                                {movie.categories.map(category => (
-                                    <Link to={`/the-loai/${category.categoryId}`} key={category.categoryId}>
-                                        {category.name}
-                                    </Link>
-                                ))}
-                            </div>
-                        </div>
-
-                    
-
-                        <div className="list_episode ah-frame-bg">
-                            <div className="heading flex flex-space-auto fw-700">
-                                <p>Danh sách tập</p>
-                                <span id="newest-ep-is-readed" className="fs-13"></span>
-                            </div>
-                            
-                            
-                            {/* <div className="list-item-episode scroll-bar">
-                              {movie.categories.some(category => category.name === "Phim lẻ") ? (
-                                  movie.episodeList.map(episode => (
-                                    <Link to={`/watch/${movieId}/${episode.episodeId}`} key={episode.episodeId}>
-                                        <span>Full</span>
-                                    </Link>
-                                ))
-                              ) : (
-                                  movie.episodeList.map(episode => (
-                                      <Link to={`/watch/${movieId}/${episode.episodeId}`} key={episode.episodeId}>
-                                          <span>{episode.episode}</span>
-                                      </Link>
-                                  ))
-                              )}
-                          </div> */}
-
-                          
-
-                            {movie.episodes === 1 ? (
-                                <div className="list-item-episode scroll-bar">
-                                    <Link to={`/watch/${movieId}/${movie.episodeList[0].episodeId}`}>
-                                        <span>Full</span>
-                                    </Link>
-                                </div>
-                            ) : (
-                                <div className="list-item-episode scroll-bar">
-                                    {movie.episodeList.map(episode => (
-                                        <Link to={`/watch/${movieId}/${episode.episodeId}`} key={episode.episodeId}>
-                                            <span>{episode.episode}</span>
+                            <p className="price">Giá mua: {movie.price}</p>
+                            <div className="list_cate">
+                                <p>Thể loại</p>
+                                <div>
+                                    {movie.categories.map(category => (
+                                        <Link to={`/the-loai/${category.categoryId}`} key={category.categoryId}>
+                                            {category.name}
                                         </Link>
                                     ))}
                                 </div>
-                            )}
-
-                        </div>
-
-                        
-                        <div>
-                            <span onClick={handleSaveMovie} className="save-movie-button">
-                                <FontAwesomeIcon icon={faBookmark} />
-                            </span>
-                            {saveMessage && <p className="save-message">{saveMessage}</p>}
-                        </div>
-                    </div>
-                </div>
-                <p className="content">Mô tả: {movie.movieContent}</p>
-
-                <div>
-                    <p>Diễn viên:</p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-                        {movie.persons.map(person => (
-                            <div key={person.personId} style={{ margin: '10px', textAlign: 'center' }}>
-                                <img src={`${process.env.REACT_APP_UPLOAD_URL}/${person.image}`} alt={person.name} style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%' }} />
-                                <span style={{ display: 'block', marginTop: '5px' }}>{person.name}</span>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
+                            <div>
+                               
+                                <Modal show={showPopup} onHide={handleClosePopup} centered className="custom-modal">
+                                    <Modal.Header closeButton className="custom-modal-header">
+                                        <Modal.Title className="custom-modal-title">Yêu cầu mua phim</Modal.Title>
+                                    </Modal.Header>
+                                    <Modal.Body className="custom-modal-body">
+                                        Bộ phim này có giá {movie.price}đ. Bạn có xác nhận mua không.
+                                    </Modal.Body>
+                                    <Modal.Footer className="custom-modal-footer">
+                                        <Button variant="secondary" onClick={handleClosePopup} className="custom-button">
+                                            Không
+                                        </Button>
+                                        <Button variant="primary" onClick={handlePurchaseMovie} className="custom-button primary-button">
+                                            Có
+                                        </Button>
+                                    </Modal.Footer>
+                                </Modal>
 
-            <div className='list-comment'>
-                <h2 className='text' style={{ textAlign: 'center' }}>Bình luận</h2>
-                <div className="comment-section">
-                    <div className="new-comment">
-                        <textarea
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            placeholder="Nhập bình luận của bạn..."
-                        />
-                        <br />
-                        <button onClick={handleCommentSubmit}>Gửi</button>
-                    </div>
-                    {comments.length > 0 ? (
-                        <ul className="comment-list">
-                            {comments.map(comment => (
-                                <li key={comment.id} className="comment-item">
-                                    <div className="comment-header">
-                                        <img src={`${process.env.REACT_APP_UPLOAD_URL}/${comment.avatar}`}  alt={comment.name} className="comment-avatar" />
-                                        <span className="comment-name">{comment.name}</span>
-                                        <span className="comment-date">{formatDate(comment.date)}</span>
-                                        <div className="comment-rating">{renderStars(comment.value)}</div>
+                            </div>
+                            {(isPurchased || movie.price === 0) ? (
+                                <div className="list_episode ah-frame-bg">
+                                    <div className="heading flex flex-space-auto fw-700">
+                                        <p>Danh sách tập</p>
+                                        <span id="newest-ep-is-readed" className="fs-13"></span>
                                     </div>
-                                    <div className="comment-content">{comment.comment}</div>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p className="no-comment">Không có bình luận</p>
-                    )}
+                                    {movie.episodes === 1 ? (
+                                        <div className="list-item-episode scroll-bar">
+                                            <Link to={`/watch/${movieId}/${movie.episodeList[0].episodeId}`}>
+                                                <span>Full</span>
+                                            </Link>
+                                        </div>
+                                    ) : (
+                                        <div className="list-item-episode scroll-bar">
+                                            {movie.episodeList.map(episode => (
+                                                <Link to={`/watch/${movieId}/${episode.episodeId}`} key={episode.episodeId}>
+                                                    <span>{episode.episode}</span>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <button onClick={handleButtonBuyClick} className="purchase-button">Mua phim</button>
+                            )}
+                            <div>
+                                <span onClick={handleSaveMovie} className="save-movie-button">
+                                    <FontAwesomeIcon icon={faBookmark} />
+                                </span>
+                                {saveMessage && <p className="save-message">{saveMessage}</p>}
+                            </div>
+                        </div>
+                    </div>
+                    <p></p>
+                    <p className="content">Mô tả: {movie.movieContent}</p>
+                    <div>
+                        <p>Diễn viên:</p>
+                        {movie.persons.length === 0 ? (
+                            <p>Đang cập nhật</p>
+                        ) : (
+                            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+                                {movie.persons.map(person => (
+                                    <div key={person.personId} style={{ margin: '10px', textAlign: 'center' }}>
+                                        <img
+                                            src={`${process.env.REACT_APP_UPLOAD_URL}/${person.image}`}
+                                            alt={person.name}
+                                            style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%' }}
+                                        />
+                                        <span style={{ display: 'block', marginTop: '5px' }}>{person.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
+                <Comment movieId={movieId} />
+                <Footer />
             </div>
-
-            <Footer />
-        </div>
+           
+        </>
     );
 };
 
 export default MovieDetail;
+

@@ -11,9 +11,13 @@
 //   const [avatarFile, setAvatarFile] = useState(null);
 //   const [uploading, setUploading] = useState(false);
 //   const [updatedUserInfo, setUpdatedUserInfo] = useState({
+//     username: userInfo.username,
+//     password: userInfo.password,
 //     name: userInfo.name,
 //     email: userInfo.email,
-//     money: userInfo.money
+//     avatar: userInfo.avatar,
+//     money: userInfo.money,
+//     roleId: userInfo.roleId // Ensure roleId is included
 //   });
 //   const [editMode, setEditMode] = useState(false);
 //   const [previewSrc, setPreviewSrc] = useState(null);
@@ -62,22 +66,38 @@
 //   };
 
 //   const handleUpdateUserInfo = async () => {
+//     // const updateUserInfo1 = {
+//     //   username: userInfo.username,
+//     //   name: updatedUserInfo.name,
+//     //   email: updatedUserInfo.email,
+//     //   password: updatedUserInfo.password,
+//     //   money: updatedUserInfo.money,
+//     //   avatar: userInfo.avatar,
+//     //   roleId: userInfo.roleId
+//     // };
 //     try {
-//       const response = await updateUserInfo(userInfo.username, updatedUserInfo);
+//       const response = await updateUserInfo(updatedUserInfo);
 //       if (response.success) {
 //         setUserInfo({
 //           ...userInfo,
+//           username: updatedUserInfo.username,
 //           name: updatedUserInfo.name,
 //           email: updatedUserInfo.email,
-//           money: updatedUserInfo.money
+//           password: updatedUserInfo.password,
+//           money: updatedUserInfo.money,
+//           avatar: updatedUserInfo.avatar,
+//           roleId: updatedUserInfo.roleId
+
 //         });
+
+//         setEditMode(false);
 //         localStorage.setItem('userInfo', JSON.stringify({
 //           ...userInfo,
+//           username: updatedUserInfo.username,
 //           name: updatedUserInfo.name,
 //           email: updatedUserInfo.email,
-//           money: updatedUserInfo.money
+//           // money: updatedUserInfo.money
 //         }));
-//         setEditMode(false);
 //       } else {
 //         console.error('Error updating user info:', response.message);
 //       }
@@ -115,25 +135,22 @@
 //           {editMode ? (
 //             <div className="edit-form">
 //               <label>
-//                 <span>Họ tên:</span>
+//                 <span>Tên:</span>
 //                 <input type="text" name="name" value={updatedUserInfo.name} onChange={handleInputChange} />
 //               </label>
 //               <label>
 //                 <span>Email:</span>
 //                 <input type="email" name="email" value={updatedUserInfo.email} onChange={handleInputChange} />
 //               </label>
-//               <label>
-//                 <span>Tiền:</span>
-//                 <input type="number" name="money" value={updatedUserInfo.money} onChange={handleInputChange} />
-//               </label>
-//               <button onClick={handleUpdateUserInfo}>Lưu</button>
-//               <button onClick={() => setEditMode(false)}>Huỷ</button>
+
+//               <button className="change-avatar" onClick={handleUpdateUserInfo}>Lưu</button>
+//               <button className="cancel" onClick={() => setEditMode(false)}>Huỷ</button>
 //             </div>
 //           ) : (
 //             <div className="user-info">
-//               <p><strong>Tên:</strong> {userInfo?.name}</p>
+//               <p><strong>Username:</strong> {userInfo?.username}</p>
 //               <p><strong>Email:</strong> {userInfo?.email}</p>
-//               {/* <p><strong>Money:</strong> {userInfo?.money}</p> */}
+//               <p><strong>Tên:</strong> {userInfo?.name}</p>
 //               <button onClick={() => setEditMode(true)}>Sửa</button>
 //             </div>
 //           )}
@@ -148,22 +165,8 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import React, { useState, useRef } from 'react';
-import { uploadUserAvatar, updateUserInfo } from '../../../Utils/api';
+import { uploadUserAvatar, updateUserInfo, changeUserPassword } from '../../../Utils/api';
 import defaultAvatar from '../../../assets/img/default-avatar.jpg';
 import './Profile.css';
 
@@ -176,11 +179,17 @@ const Profile = () => {
   const [uploading, setUploading] = useState(false);
   const [updatedUserInfo, setUpdatedUserInfo] = useState({
     username: userInfo.username,
+    password: userInfo.password,
     name: userInfo.name,
     email: userInfo.email,
-    money: userInfo.money
+    avatar: userInfo.avatar,
+    money: userInfo.money,
+    roleId: userInfo.roleId // Ensure roleId is included
   });
   const [editMode, setEditMode] = useState(false);
+  const [changePasswordMode, setChangePasswordMode] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [previewSrc, setPreviewSrc] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -232,18 +241,51 @@ const Profile = () => {
       if (response.success) {
         setUserInfo({
           ...userInfo,
-          username: userInfo.username,
+          username: updatedUserInfo.username,
           name: updatedUserInfo.name,
           email: updatedUserInfo.email,
-          money: updatedUserInfo.money
+          password: updatedUserInfo.password,
+          money: updatedUserInfo.money,
+          avatar: updatedUserInfo.avatar,
+          roleId: updatedUserInfo.roleId
         });
 
         setEditMode(false);
+        localStorage.setItem('userInfo', JSON.stringify({
+          ...userInfo,
+          username: updatedUserInfo.username,
+          name: updatedUserInfo.name,
+          email: updatedUserInfo.email,
+          password: updatedUserInfo.password,
+          money: updatedUserInfo.money,
+          avatar: updatedUserInfo.avatar,
+          roleId: updatedUserInfo.roleId
+        }));
       } else {
         console.error('Error updating user info:', response.message);
       }
     } catch (error) {
       console.error('Error updating user info:', error);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    try {
+      console.log("userInfo.username", userInfo.username)
+      console.log("oldPassword", oldPassword)
+      console.log("newPassword", newPassword)
+      const response = await changeUserPassword(userInfo.username, oldPassword, newPassword);
+      if (response.success) {
+        alert('Đổi mật khẩu thành công!');
+        setChangePasswordMode(false);
+        setOldPassword('');
+        setNewPassword('');
+      } else {
+        alert('Đổi mật khẩu thất bại: ' + response.message);
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      alert('Đổi mật khẩu thất bại');
     }
   };
 
@@ -276,26 +318,37 @@ const Profile = () => {
           {editMode ? (
             <div className="edit-form">
               <label>
-                <span>Họ tên:</span>
+                <span>Tên:</span>
                 <input type="text" name="name" value={updatedUserInfo.name} onChange={handleInputChange} />
               </label>
               <label>
                 <span>Email:</span>
                 <input type="email" name="email" value={updatedUserInfo.email} onChange={handleInputChange} />
               </label>
-              {/* <label>
-                <span>Tiền:</span>
-                <input type="number" name="money" value={updatedUserInfo.money} onChange={handleInputChange} />
-              </label> */}
               <button className="change-avatar" onClick={handleUpdateUserInfo}>Lưu</button>
               <button className="cancel" onClick={() => setEditMode(false)}>Huỷ</button>
             </div>
           ) : (
             <div className="user-info">
-              <p><strong>Tên:</strong> {userInfo?.name}</p>
+              <p><strong>Username:</strong> {userInfo?.username}</p>
               <p><strong>Email:</strong> {userInfo?.email}</p>
-              <p><strong>Money:</strong> {userInfo?.money}</p>
+              <p><strong>Tên:</strong> {userInfo?.name}</p>
               <button onClick={() => setEditMode(true)}>Sửa</button>
+              <button onClick={() => setChangePasswordMode(true)}>Đổi mật khẩu</button>
+            </div>
+          )}
+          {changePasswordMode && (
+            <div className="change-password-form">
+              <label>
+                <span>Mật khẩu cũ:</span>
+                <input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
+              </label>
+              <label>
+                <span>Mật khẩu mới:</span>
+                <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              </label>
+              <button onClick={handleChangePassword}>Xác nhận</button>
+              <button onClick={() => setChangePasswordMode(false)}>Huỷ</button>
             </div>
           )}
         </div>

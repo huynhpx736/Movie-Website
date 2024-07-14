@@ -83,5 +83,8 @@
   
   button {
     margin-top: 10px;
+    border-radius: 5px;
+    color: #ffffff;
+    background-color: #d36b6b;
   }
   
